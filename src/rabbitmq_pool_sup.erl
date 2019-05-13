@@ -42,7 +42,8 @@ init([]) ->
 
 
 producer_specs()	->
-		{ok, App} = application:get_application(?MODULE),
+		%%{ok, App} = application:get_application(?MODULE),
+		App = rabbitmq_pool,
 		ProducerServices = get_services(App, producer_services),
 		[producer_spec(App, ProducerService) || ProducerService <- ProducerServices].
 
@@ -57,7 +58,8 @@ producer_spec(App, Service)	->
 
 
 consumer_specs()  ->
-    {ok, App} = application:get_application(?MODULE),
+    %% {ok, App} = application:get_application(?MODULE),
+		App = rabbitmq_pool,
     ConsumerServices = get_services(App, consumer_services),
     [consumer_spec(App, ConsumerService) || ConsumerService <- ConsumerServices].
 
