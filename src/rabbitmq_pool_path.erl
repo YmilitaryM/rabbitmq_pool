@@ -57,7 +57,7 @@ get_pid(Service)	->
 
 register(Service, Pid)	->
 	ServicePid = get_service_pid(Service),
-	gen_server:cast(Pid, {register, Pid}).
+	gen_server:cast(ServicePid, {register, Pid}).
 
 get_service_pid(Service)	->
 	ServiceName = list_to_atom("path_service_" ++ atom_to_list(Service)),
