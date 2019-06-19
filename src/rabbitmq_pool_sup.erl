@@ -34,12 +34,33 @@ start_link() ->
 init([]) ->
 		ProducerSpecs = producer_specs(),
 		ConsumerSpecs = consumer_specs(),
-    {ok, {{one_for_one, 10000, 1}, ProducerSpecs ++ ConsumerSpecs}}.
+    PathSpecs = path_specs(),
+    {ok, {{one_for_one, 10000, 1}, ProducerSpecs ++ ConsumerSpecs ++ PathSpecs}}.
 
 %%====================================================================
 %% Internal functions
 %%====================================================================
 
+path_specs()  ->
+    App = rabbitmq_pool,
+    ConsumerServices = get_services(App, consumer_services),
+    [path_spec(App, Service) || Service <- ConsumerServices].
+
+path_spec(App, Service) ->
+    PathService = list_to_atom("path_service_" ++ atom_to_list(Service)),
+    {ok, Opts} = application:get_env(App, Service),
+    PoolSize = 1, %%% 因为要创建ets表，默认为1
+    EtsName = proplists:get_value(ets_name, Opts),
+    PoolOpts = [PathService, PoolSize,
+                    [],
+                    {rabbitmq_pool_path, start_link, [EtsName]}],
+    {PathService,
+     {cuesport, start_link, PoolOpts},
+     permanent,
+     infinity,
+     supervisor,
+     []
+    }.
 
 producer_specs()	->
 		%%{ok, App} = application:get_application(?MODULE),

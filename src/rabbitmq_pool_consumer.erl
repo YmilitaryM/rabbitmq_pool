@@ -9,7 +9,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 -module(rabbitmq_pool_consumer).
 -include_lib("amqp_client/include/amqp_client.hrl").
--record(rabbitmq_server, {server = undefined, channel = undefined}).
+-record(rabbitmq_server, {server = undefined, channel = undefined,
+						  ets_name = undefined}).
 
 
 -behaviour(gen_server).
@@ -27,6 +28,7 @@ init(Args)	->
 		UserName = proplists:get_value(user, Args, <<"guest">>),
 		Password = proplists:get_value(password , Args, <<"guest">>),
 		Host = proplists:get_value(host, Args, "127.0.0.1"),
+		EtsName = proplists:get_value(ets_name, Args),
 		{ok, Connection} = amqp_connection:start(#amqp_params_network{username = UserName, password = Password, host = Host}),
 		{ok, Channel} = amqp_connection:open_channel(Connection),
 		Exchange = proplists:get_value(exchange, Args, <<"">>),
@@ -59,7 +61,8 @@ init(Args)	->
 		amqp_channel:call(Channel, #'basic.qos'{prefetch_count = 1}),
 		Work = #'basic.consume'{queue = Queue},
 		amqp_channel:subscribe(Channel, Work, self()),
-		{ok, #rabbitmq_server{server = Connection ,channel = Channel}}.
+		{ok, #rabbitmq_server{server = Connection ,channel = Channel,
+							  ets_name = EtsName}}.
 
 
 terminate(_Reason, #rabbitmq_server{server = Server} = State) ->
@@ -92,5 +95,6 @@ handle_cast(_Request, State)	->
 code_change(_OldVersion, State, _Extra)	->
 		{ok, State}.
 	
-private_handle_data(PayLoad, State)	->
-		io:format("PayLoad:~p, State:~p~n", [PayLoad, State]).
+private_handle_data(Payload, #rabbitmq_server{ets_name = EtsName} = _State)	->
+		Pids = rabbitmq_pool_path:get_pid(EtsName),
+		[Pid ! Payload || Pid <- Pids].
