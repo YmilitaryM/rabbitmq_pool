@@ -23,3 +23,4 @@ Shell
 		rabbitmq_pool_producer:sub(producer_test, <<"sub_exchange_test">>, <<"sub_routing_key_test">>, <<"hello sub">>).
 		rabbitmq_pool_producer:sub(Server, Exchange, RoutingKey, PayLoad).
 
+######## this is a test
