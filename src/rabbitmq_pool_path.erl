@@ -23,7 +23,7 @@ start_link(Args)	->
 
 init(Args)	->
 	% EtsName = proplists:get_value(ets_name, Args),
-	io:format("Args:~p~n", [Args]),
+	%io:format("Args:~p~n", [Args]),
 	ets:new(Args, [set, private, named_table, {read_concurrency, true}]),
 	{ok, #{ets_name => Args}}.
 
